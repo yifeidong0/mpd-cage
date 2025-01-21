@@ -11,7 +11,7 @@ import torch
 from einops._torch_specific import allow_ops_in_compiled_graph  # requires einops>=0.6.1
 
 from experiment_launcher import single_experiment_yaml, run_experiment
-from mp_baselines.planners.costs.cost_functions import CostCollision, CostComposite, CostGPTrajectory
+from mp_baselines.planners.costs.cost_functions import CostCollision, CostComposite, CostGPTrajectory, CostPotentialEnergy
 from mpd.models import TemporalUnet, UNET_DIM_MULTS
 from mpd.models.diffusion_models.guides import GuideManagerTrajectoriesWithVelocity
 from mpd.models.diffusion_models.sample_functions import guide_gradient_steps, ddpm_sample_fn
@@ -28,7 +28,7 @@ from torch_robotics.visualizers.planning_visualizer import PlanningVisualizer
 allow_ops_in_compiled_graph()
 
 
-TRAINED_MODELS_DIR = '../../data_trained_models/'
+TRAINED_MODELS_DIR = 'data_trained_models/'
 
 
 @single_experiment_yaml
@@ -37,8 +37,8 @@ def experiment(
     # Experiment configuration
     # model_id: str = 'EnvDense2D-RobotPointMass',
     # model_id: str = 'EnvNarrowPassageDense2D-RobotPointMass',
-    # model_id: str = 'EnvSimple2D-RobotPointMass',
-    model_id: str = 'EnvSpheres3D-RobotPanda',
+    model_id: str = 'EnvSimple2D-RobotPointMass',
+    # model_id: str = 'EnvSpheres3D-RobotPanda',
 
     # planner_alg: str = 'diffusion_prior',
     # planner_alg: str = 'diffusion_prior_then_guide',
@@ -46,14 +46,15 @@ def experiment(
 
     use_guide_on_extra_objects_only: bool = False,
 
-    n_samples: int = 50,
+    n_samples: int = 20,
 
     start_guide_steps_fraction: float = 0.25,
     n_guide_steps: int = 5,
     n_diffusion_steps_without_noise: int = 5,
 
     weight_grad_cost_collision: float = 1e-2,
-    weight_grad_cost_smoothness: float = 1e-7,
+    weight_grad_cost_smoothness: float = 1e-3,
+    weight_potential_energy: float = 5e-2,
 
     factor_num_interpolated_points_for_collision: float = 1.5,
 
@@ -68,7 +69,7 @@ def experiment(
 
     ########################################################################
     # MANDATORY
-    seed: int = 30,
+    seed: int = 201,
     results_dir: str = 'logs',
 
     ########################################################################
@@ -212,10 +213,20 @@ def experiment(
     ]
     weights_grad_cost_l.append(weight_grad_cost_smoothness)
 
+    # Cost potential energy
+    cost_potential_energy_l = [
+        CostPotentialEnergy(
+            robot, n_support_points,
+            tensor_args=tensor_args
+        )
+    ]
+    weights_grad_cost_l.append(weight_potential_energy)
+    
     ####### Cost composition
     cost_func_list = [
         *cost_collision_l,
-        *cost_smoothness_l
+        *cost_smoothness_l,
+        *cost_potential_energy_l
     ]
 
     cost_composite = CostComposite(
@@ -387,7 +398,7 @@ def experiment(
 
             motion_planning_isaac_env = PandaMotionPlanningIsaacGymEnv(
                 env, robot, task,
-                asset_root="../../deps/isaacgym/assets",
+                asset_root="deps/isaacgym/assets",
                 controller_type='position',
                 num_envs=trajs_pos.shape[1],
                 all_robots_in_one_env=True,

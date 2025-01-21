@@ -13,7 +13,7 @@ from torch_robotics.tasks.tasks import PlanningTask
 from torch_robotics.torch_utils.torch_utils import DEFAULT_TENSOR_ARGS, to_torch
 from torch_robotics.visualizers.planning_visualizer import PlanningVisualizer
 
-DATA_DIR = '../../data_trajectories/EnvSpheres3D-RobotPanda-cluster/66'
+DATA_DIR = 'data_trajectories/EnvSimple2D-RobotPointMass/10'
 
 tensor_args = DEFAULT_TENSOR_ARGS
 
@@ -24,6 +24,12 @@ print(f"\n-------------- METADATA --------------")
 print(yaml.dump(metadata))
 print(f"\n--------------------------------------")
 print()
+
+# Load the pickle file
+with open(os.path.join(DATA_DIR, 'results_data_dict.pickle'), 'rb') as file:
+    data = pickle.load(file)
+# dict
+print(data.keys())
 
 # -------------------------------- Load env, robot, task ---------------------------------
 # Environment
@@ -37,6 +43,7 @@ robot = robot_class(
 )
 
 # Task
+print('tensor_args',tensor_args)
 task = PlanningTask(
     env=env,
     robot=robot,
@@ -47,6 +54,8 @@ task = PlanningTask(
 # -------------------------------- Load trajectories -------------------------
 trajs_collision = torch.load(os.path.join(DATA_DIR, 'trajs-collision.pt')).to(**tensor_args)
 trajs_free = torch.load(os.path.join(DATA_DIR, 'trajs-free.pt')).to(**tensor_args)
+print(f"trajs_collision.shape: {trajs_collision.shape}")
+print(f"trajs_free.shape: {trajs_free.shape}")
 
 # trajs = torch.cat((trajs_collision, trajs_free))
 trajs = trajs_free
@@ -58,13 +67,13 @@ pos_trajs = robot.get_position(trajs)
 start_state_pos = pos_trajs[0][0]
 goal_state_pos = pos_trajs[0][-1]
 
-planner_visualizer.plot_joint_space_state_trajectories(
-    trajs=trajs,
-    pos_start_state=start_state_pos, pos_goal_state=goal_state_pos,
-    vel_start_state=torch.zeros_like(start_state_pos), vel_goal_state=torch.zeros_like(goal_state_pos),
-)
+# planner_visualizer.plot_joint_space_state_trajectories(
+#     trajs=trajs,
+#     pos_start_state=start_state_pos, pos_goal_state=goal_state_pos,
+#     vel_start_state=torch.zeros_like(start_state_pos), vel_goal_state=torch.zeros_like(goal_state_pos),
+# )
 
-plt.show()
+# plt.show()
 
 planner_visualizer.render_robot_trajectories(
     trajs=trajs, start_state=start_state_pos, goal_state=goal_state_pos,
@@ -73,12 +82,12 @@ planner_visualizer.render_robot_trajectories(
 
 plt.show()
 
-planner_visualizer.animate_robot_trajectories(
-    trajs=trajs, start_state=start_state_pos, goal_state=goal_state_pos,
-    plot_trajs=True,
-    video_filepath=os.path.join(DATA_DIR, 'robot-traj.mp4'),
-    # n_frames=max((2, pos_trajs_iters[-1].shape[1]//10)),
-    n_frames=trajs.shape[1],
-    anim_time=args['duration']
-)
+# planner_visualizer.animate_robot_trajectories(
+#     trajs=trajs, start_state=start_state_pos, goal_state=goal_state_pos,
+#     plot_trajs=True,
+#     video_filepath=os.path.join(DATA_DIR, 'robot-traj.mp4'),
+#     # n_frames=max((2, pos_trajs_iters[-1].shape[1]//10)),
+#     n_frames=trajs.shape[1],
+#     anim_time=args['duration']
+# )
 

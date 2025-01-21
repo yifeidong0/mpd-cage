@@ -206,7 +206,7 @@ class GuideManagerTrajectoriesWithVelocity(nn.Module):
                     grad_cost_clipped_weighted = weight_grad_cost * grad_cost_clipped
                     grad += grad_cost_clipped_weighted
 
-        # gradient ascent
+        # gradient ascent (the minus sign in algo 1, line 10)
         grad = -1. * grad
         return grad
 
