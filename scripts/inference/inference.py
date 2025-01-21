@@ -37,8 +37,9 @@ def experiment(
     # Experiment configuration
     # model_id: str = 'EnvDense2D-RobotPointMass',
     # model_id: str = 'EnvNarrowPassageDense2D-RobotPointMass',
-    model_id: str = 'EnvSimple2D-RobotPointMass',
     # model_id: str = 'EnvSpheres3D-RobotPanda',
+    # model_id: str = 'EnvSimple2D-RobotPointMass',
+    model_id: str = 'EnvCage2D-RobotPointMass',
 
     # planner_alg: str = 'diffusion_prior',
     # planner_alg: str = 'diffusion_prior_then_guide',
@@ -46,7 +47,7 @@ def experiment(
 
     use_guide_on_extra_objects_only: bool = False,
 
-    n_samples: int = 2,
+    n_samples: int = 20,
 
     start_guide_steps_fraction: float = 0.25,
     n_guide_steps: int = 5,
@@ -69,7 +70,7 @@ def experiment(
 
     ########################################################################
     # MANDATORY
-    seed: int = 201,
+    seed: int = 3,
     results_dir: str = 'logs',
 
     ########################################################################
@@ -107,15 +108,15 @@ def experiment(
     # Load dataset with env, robot, task
     train_subset, train_dataloader, val_subset, val_dataloader = get_dataset(
         dataset_class='TrajectoryDataset',
-        use_extra_objects=True,
+        use_extra_objects=0, # NOTE: red extra objects
         obstacle_cutoff_margin=0.05,
         **args,
         tensor_args=tensor_args
     )
     dataset = train_subset.dataset
     n_support_points = dataset.n_support_points
-    env = dataset.env
-    robot = dataset.robot
+    env = dataset.env # for example, EnvSimple2D
+    robot = dataset.robot # for example, RobotPointMass
     task = dataset.task
 
     dt = trajectory_duration / n_support_points  # time interval for finite differences
@@ -374,15 +375,15 @@ def experiment(
 
         pos_trajs_iters = robot.get_position(trajs_iters)
 
-        planner_visualizer.animate_opt_iters_joint_space_state(
-            trajs=trajs_iters,
-            pos_start_state=start_state_pos, pos_goal_state=goal_state_pos,
-            vel_start_state=torch.zeros_like(start_state_pos), vel_goal_state=torch.zeros_like(goal_state_pos),
-            traj_best=traj_final_free_best,
-            video_filepath=os.path.join(results_dir, f'{base_file_name}-joint-space-opt-iters.mp4'),
-            n_frames=max((2, len(trajs_iters))),
-            anim_time=5
-        )
+        # planner_visualizer.animate_opt_iters_joint_space_state(
+        #     trajs=trajs_iters,
+        #     pos_start_state=start_state_pos, pos_goal_state=goal_state_pos,
+        #     vel_start_state=torch.zeros_like(start_state_pos), vel_goal_state=torch.zeros_like(goal_state_pos),
+        #     traj_best=traj_final_free_best,
+        #     video_filepath=os.path.join(results_dir, f'{base_file_name}-joint-space-opt-iters.mp4'),
+        #     n_frames=max((2, len(trajs_iters))),
+        #     anim_time=5
+        # )
 
         if isinstance(robot, RobotPanda):
             # visualize in Isaac Gym
@@ -433,14 +434,14 @@ def experiment(
                 anim_time=5
             )
 
-            planner_visualizer.animate_robot_trajectories(
-                trajs=pos_trajs_iters[-1], start_state=start_state_pos, goal_state=goal_state_pos,
-                plot_trajs=True,
-                video_filepath=os.path.join(results_dir, f'{base_file_name}-robot-traj.mp4'),
-                # n_frames=max((2, pos_trajs_iters[-1].shape[1]//10)),
-                n_frames=pos_trajs_iters[-1].shape[1],
-                anim_time=trajectory_duration
-            )
+            # planner_visualizer.animate_robot_trajectories(
+            #     trajs=pos_trajs_iters[-1], start_state=start_state_pos, goal_state=goal_state_pos,
+            #     plot_trajs=True,
+            #     video_filepath=os.path.join(results_dir, f'{base_file_name}-robot-traj.mp4'),
+            #     # n_frames=max((2, pos_trajs_iters[-1].shape[1]//10)),
+            #     n_frames=pos_trajs_iters[-1].shape[1],
+            #     anim_time=trajectory_duration
+            # )
 
         plt.show()
 

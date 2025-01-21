@@ -50,6 +50,7 @@ launcher = Launcher(
 
 dataset_subdir_l = [
     'EnvSimple2D-RobotPointMass',
+    'EnvCage2D-RobotPointMass',
     'EnvNarrowPassageDense2D-RobotPointMass',
     'EnvDense2D-RobotPointMass',
     'EnvSpheres3D-RobotPanda',

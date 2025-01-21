@@ -17,6 +17,7 @@ def experiment(
     ########################################################################
     # Dataset
     dataset_subdir: str = 'EnvSimple2D-RobotPointMass',
+    # dataset_subdir: str = 'EnvCage2D-RobotPointMass',
     # dataset_subdir: str = 'EnvSpheres3D-RobotPanda',
     include_velocity: bool = True,
 

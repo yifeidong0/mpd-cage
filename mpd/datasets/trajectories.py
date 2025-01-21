@@ -43,7 +43,7 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
         # -------------------------------- Load env, robot, task ---------------------------------
         # Environment
         env_class = getattr(
-            environments, self.metadata['env_id'] + 'ExtraObjects' if use_extra_objects else self.metadata['env_id'])
+            environments, self.metadata['env_id'] + 'ExtraObjects' if use_extra_objects else self.metadata['env_id']) # NOTE: env comes from first folder in the dataset (data_trajectories, metadata.yaml)
         self.env = env_class(tensor_args=tensor_args)
 
         # Robot
