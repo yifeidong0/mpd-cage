@@ -46,7 +46,7 @@ def experiment(
 
     use_guide_on_extra_objects_only: bool = False,
 
-    n_samples: int = 20,
+    n_samples: int = 2,
 
     start_guide_steps_fraction: float = 0.25,
     n_guide_steps: int = 5,
