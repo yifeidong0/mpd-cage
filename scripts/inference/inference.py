@@ -53,7 +53,7 @@ def experiment(
     n_guide_steps: int = 5,
     n_diffusion_steps_without_noise: int = 5,
 
-    weight_grad_cost_collision: float = 1e-2,
+    weight_grad_cost_collision: float = 1e-2, # 1e-2
     weight_grad_cost_smoothness: float = 1e-3,
     weight_potential_energy: float = 5e-2,
 
@@ -70,7 +70,7 @@ def experiment(
 
     ########################################################################
     # MANDATORY
-    seed: int = 3,
+    seed: int = 32,
     results_dir: str = 'logs',
 
     ########################################################################
@@ -160,9 +160,19 @@ def experiment(
     n_tries = 100
     start_state_pos, goal_state_pos = None, None
     for _ in range(n_tries):
-        q_free = task.random_coll_free_q(n_samples=2)
-        start_state_pos = q_free[0]
-        goal_state_pos = q_free[1]
+        if model_id == 'EnvCage2D-RobotPointMass':
+            # Check if q_free falls within the angle (-0.25 * torch.pi, 1.25 * torch.pi) and radius (0.0, 0.5) ranges
+            q_free = task.random_coll_free_q(n_samples=1)
+            rad = torch.linalg.norm(q_free- torch.tensor([0.0, 0.0], **tensor_args))
+            angle = torch.atan2(q_free[1], q_free[0])
+            if rad > 0.5 or angle < -0.25 * torch.pi or angle > 1.25 * torch.pi:
+                continue
+            start_state_pos = q_free
+            goal_state_pos = torch.tensor([0.0, -1.0], **tensor_args)
+        else:
+            q_free = task.random_coll_free_q(n_samples=2)
+            start_state_pos = q_free[0]
+            goal_state_pos = q_free[1]
 
         if torch.linalg.norm(start_state_pos - goal_state_pos) > dataset.threshold_start_goal_pos:
             break

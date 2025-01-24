@@ -15,7 +15,7 @@ USE_CUDA = True
 
 N_SEEDS = 1
 
-N_EXPS_IN_PARALLEL = 4
+N_EXPS_IN_PARALLEL = 1
 
 N_CORES = N_EXPS_IN_PARALLEL * 4
 MEMORY_SINGLE_JOB = 12000
@@ -49,11 +49,11 @@ launcher = Launcher(
 # EXPERIMENT PARAMETERS SETUP
 
 dataset_subdir_l = [
-    'EnvSimple2D-RobotPointMass',
+    # 'EnvSimple2D-RobotPointMass',
     'EnvCage2D-RobotPointMass',
-    'EnvNarrowPassageDense2D-RobotPointMass',
-    'EnvDense2D-RobotPointMass',
-    'EnvSpheres3D-RobotPanda',
+    # 'EnvNarrowPassageDense2D-RobotPointMass',
+    # 'EnvDense2D-RobotPointMass',
+    # 'EnvSpheres3D-RobotPanda',
 
 ]
 
@@ -81,7 +81,7 @@ dim = 32
 
 unet_dim_mults_option_l = [
     0,
-    1
+    # 1
 ]
 
 
@@ -90,8 +90,9 @@ lr = 3e-4
 
 
 wandb_options = dict(
-    wandb_mode='disabled',  # "online", "offline" or "disabled"
-    wandb_entity='scoreplan',
+    wandb_enabled=True,
+    wandb_mode='online',  # "online", "offline" or "disabled"
+    wandb_entity='yif',
     wandb_project=exp_name
 )
 
@@ -113,10 +114,10 @@ for dataset_subdir, include_velocity, use_ema, variance_schedule, n_diffusion_st
         lr=lr,
 
         batch_size=batch_size,
-        num_train_steps=500000,
+        num_train_steps=5000, # 500000
 
-        steps_til_ckpt=50000,
-        steps_til_summary=20000,
+        steps_til_ckpt=5000, # 50000
+        steps_til_summary=1000, # 20000
 
         **wandb_options,
         wandb_group=f'{dataset_subdir}-{include_velocity}-{use_ema}-{variance_schedule}-{n_diffusion_steps}-{predict_epsilon}-{unet_dim_mults_option}',

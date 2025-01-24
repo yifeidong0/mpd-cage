@@ -16,8 +16,8 @@ os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 def experiment(
     ########################################################################
     # Dataset
-    dataset_subdir: str = 'EnvSimple2D-RobotPointMass',
-    # dataset_subdir: str = 'EnvCage2D-RobotPointMass',
+    # dataset_subdir: str = 'EnvSimple2D-RobotPointMass',
+    dataset_subdir: str = 'EnvCage2D-RobotPointMass',
     # dataset_subdir: str = 'EnvSpheres3D-RobotPanda',
     include_velocity: bool = True,
 
@@ -63,7 +63,7 @@ def experiment(
     ########################################################################
     # WandB
     wandb_mode: str = 'disabled',  # "online", "offline" or "disabled"
-    wandb_entity: str = 'scoreplan',
+    wandb_entity: str = 'yif',
     wandb_project: str = 'test_train',
     **kwargs
 ):
