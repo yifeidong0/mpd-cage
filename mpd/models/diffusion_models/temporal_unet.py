@@ -120,6 +120,8 @@ class TemporalUnet(nn.Module):
         x : [ batch x horizon x state_dim ]
         context: [batch x context_dim]
         """
+        context = context['tasks'] if isinstance(context, dict) else context
+
         b, h, d = x.shape
 
         t_emb = self.time_mlp(time)

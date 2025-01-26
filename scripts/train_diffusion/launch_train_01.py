@@ -85,8 +85,8 @@ unet_dim_mults_option_l = [
 ]
 
 
-batch_size = 128
-lr = 3e-4
+batch_size = 8
+lr = 5e-5
 
 
 wandb_options = dict(

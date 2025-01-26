@@ -4,6 +4,7 @@ import torch
 from experiment_launcher import single_experiment_yaml, run_experiment
 from mpd import trainer
 from mpd.models import UNET_DIM_MULTS, TemporalUnet
+from mpd.models.diffusion_models.dp_conditional_unet import ConditionalUnet1D
 from mpd.trainer import get_dataset, get_model, get_loss, get_summary
 from mpd.trainer.trainer import get_num_epochs
 from torch_robotics.torch_utils.seed import fix_random_seed
@@ -27,6 +28,8 @@ def experiment(
     variance_schedule: str = 'exponential',  # cosine
     n_diffusion_steps: int = 25,
     predict_epsilon: bool = True,
+
+    use_conditioning: bool = 0,
 
     # Unet
     unet_input_dim: int = 32,
@@ -85,27 +88,51 @@ def experiment(
 
     dataset = train_subset.dataset
 
+    num_obstacles = 6 # TODO
+    dof_per_obstacle = 3
+    global_cond_dim = num_obstacles * dof_per_obstacle
+    context_model = 'default' if use_conditioning else None
+    conditioning_type = 'default' if use_conditioning else None
+
+    # if use_conditioning:
+        # Diffusion policy conditioning
+        # unet_configs = dict(
+        #     input_dim=dataset.state_dim*dataset.n_support_points, # 4*64
+        #     global_cond_dim=global_cond_dim
+        # )
+        # model = get_model(
+        #     model_class=diffusion_model_class,
+        #     model=ConditionalUnet1D(**unet_configs),
+        #     tensor_args=tensor_args,
+        #     **diffusion_configs,
+        #     **unet_configs
+        # )
+
     # Model
     diffusion_configs = dict(
         variance_schedule=variance_schedule,
         n_diffusion_steps=n_diffusion_steps,
         predict_epsilon=predict_epsilon,
+        context_model=context_model,
     )
-
+    
+    # TemporalUnet (Janner et al.)
     unet_configs = dict(
         state_dim=dataset.state_dim,
         n_support_points=dataset.n_support_points,
         unet_input_dim=unet_input_dim,
         dim_mults=UNET_DIM_MULTS[unet_dim_mults_option],
+        conditioning_type=conditioning_type,
+        conditioning_embed_dim=global_cond_dim,
     )
-
-    model = get_model(
+    model = get_model( # class GaussianDiffusionModel()
         model_class=diffusion_model_class,
         model=TemporalUnet(**unet_configs),
         tensor_args=tensor_args,
         **diffusion_configs,
         **unet_configs
     )
+
 
     # Loss
     loss_fn = val_loss_fn = get_loss(

@@ -82,6 +82,7 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
     def load_trajectories(self):
         # load free trajectories
         trajs_free_l = []
+        obstacles_l = []
         task_id = 0
         n_trajs = 0
         for current_dir, subdirs, files in os.walk(self.base_dir, topdown=True):
@@ -95,6 +96,10 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
                 task_id += 1
                 n_trajs += len(trajs_free_tmp)
                 trajs_free_l.append(trajs_free_tmp)
+            if 'obstacles.pt' in files: # NOTE
+                obstacles_tmp = torch.load(
+                    os.path.join(current_dir, 'obstacles.pt'), map_location=self.tensor_args['device'])
+                obstacles_l.append(obstacles_tmp)
 
         trajs_free = torch.cat(trajs_free_l)
         trajs_free_pos = self.robot.get_position(trajs_free)
@@ -106,8 +111,9 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
         self.fields[self.field_key_traj] = trajs
 
         # task: start and goal state positions [n_trajectories, 2 * state_dim]
-        task = torch.cat((trajs_free_pos[..., 0, :], trajs_free_pos[..., -1, :]), dim=-1)
-        self.fields[self.field_key_task] = task
+        # task = torch.cat((trajs_free_pos[..., 0, :], trajs_free_pos[..., -1, :]), dim=-1) # NOTE: torch.Size([3600*4, 2*2]), position-only
+        obstacles = torch.cat(obstacles_l)
+        self.fields[self.field_key_task] = obstacles
 
     def normalize_all_data(self, *keys):
         for key in keys:

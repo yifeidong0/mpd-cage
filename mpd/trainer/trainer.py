@@ -113,7 +113,8 @@ def do_summary(
     model.train()
 
 
-def train(model=None, train_dataloader=None, epochs=None, lr=None, steps_til_summary=None, model_dir=None, loss_fn=None,
+def train(model=None, # class GaussianDiffusionModel()
+          train_dataloader=None, epochs=None, lr=None, steps_til_summary=None, model_dir=None, loss_fn=None,
           train_subset=None,
           summary_fn=None, steps_til_checkpoint=None,
           val_dataloader=None, val_subset=None,

@@ -50,12 +50,12 @@ def experiment(
     n_samples: int = 20,
 
     start_guide_steps_fraction: float = 0.25,
-    n_guide_steps: int = 5,
+    n_guide_steps: int = 0,
     n_diffusion_steps_without_noise: int = 5,
 
     weight_grad_cost_collision: float = 1e-2, # 1e-2
-    weight_grad_cost_smoothness: float = 1e-3,
-    weight_potential_energy: float = 5e-2,
+    weight_grad_cost_smoothness: float = 1e-4, # 1e-3
+    weight_potential_energy: float = 5e-3, # 5e-2
 
     factor_num_interpolated_points_for_collision: float = 1.5,
 
@@ -70,7 +70,7 @@ def experiment(
 
     ########################################################################
     # MANDATORY
-    seed: int = 32,
+    seed: int = 11,
     results_dir: str = 'logs',
 
     ########################################################################
@@ -165,7 +165,7 @@ def experiment(
             q_free = task.random_coll_free_q(n_samples=1)
             rad = torch.linalg.norm(q_free- torch.tensor([0.0, 0.0], **tensor_args))
             angle = torch.atan2(q_free[1], q_free[0])
-            if rad > 0.5 or angle < -0.25 * torch.pi or angle > 1.25 * torch.pi:
+            if rad > 0.5 or angle < -1.25 * torch.pi or angle > 0.25 * torch.pi:
                 continue
             start_state_pos = q_free
             goal_state_pos = torch.tensor([0.0, -1.0], **tensor_args)

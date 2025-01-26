@@ -33,9 +33,9 @@ def build_context(model, dataset, input_dict):
     if model.context_model is not None:
         context = dict()
         # (normalized) features of variable environments
-        if dataset.variable_environment:
-            env_normalized = input_dict[f'{dataset.field_key_env}_normalized']
-            context['env'] = env_normalized
+        # if dataset.variable_environment:
+        #     env_normalized = input_dict[f'{dataset.field_key_env}_normalized']
+        #     context['env'] = env_normalized
 
         # tasks
         task_normalized = input_dict[f'{dataset.field_key_task}_normalized']
@@ -141,8 +141,8 @@ class GaussianDiffusionModel(nn.Module, ABC):
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
     def p_mean_variance(self, x, hard_conds, context, t):
-        if context is not None:
-            context = self.context_model(context)
+        # if context is not None:
+        #     context = self.context_model(context)
 
         x_recon = self.predict_start_from_noise(x, t=t, noise=self.model(x, t, context))
 
@@ -335,8 +335,8 @@ class GaussianDiffusionModel(nn.Module, ABC):
         x_noisy = apply_hard_conditioning(x_noisy, hard_conds)
 
         # context model
-        if context is not None:
-            context = self.context_model(context)
+        # if context is not None:
+        #     context = self.context_model(context) # [batch x context_dim]
 
         # diffusion model
         x_recon = self.model(x_noisy, t, context)
