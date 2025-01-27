@@ -134,6 +134,7 @@ class TemporalUnet(nn.Module):
             # reshape to keep the interface
             context = einops.rearrange(context, 'b d -> b 1 d')
         elif self.conditioning_type == 'default':
+            # print('$$$$$$context', context.shape)
             c_emb = torch.cat((t_emb, context), dim=-1)
 
         # swap horizon and channels (state_dim)

@@ -80,13 +80,13 @@ predict_epsilon_l = [
 dim = 32
 
 unet_dim_mults_option_l = [
-    0,
-    # 1
+    # 0,
+    1
 ]
 
 
-batch_size = 8
-lr = 5e-5
+batch_size = 128
+lr = 3e-5
 
 
 wandb_options = dict(
@@ -114,10 +114,10 @@ for dataset_subdir, include_velocity, use_ema, variance_schedule, n_diffusion_st
         lr=lr,
 
         batch_size=batch_size,
-        num_train_steps=5000, # 500000
+        num_train_steps=1e6, # 500000
 
-        steps_til_ckpt=5000, # 50000
-        steps_til_summary=1000, # 20000
+        steps_til_ckpt=5e3, # 50000
+        steps_til_summary=2e3, # 20000
 
         **wandb_options,
         wandb_group=f'{dataset_subdir}-{include_velocity}-{use_ema}-{variance_schedule}-{n_diffusion_steps}-{predict_epsilon}-{unet_dim_mults_option}',
