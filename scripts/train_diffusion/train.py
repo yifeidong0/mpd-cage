@@ -94,19 +94,18 @@ def experiment(
     context_model = 'default' if use_conditioning else None
     conditioning_type = 'default' if use_conditioning else None
 
-    # if use_conditioning:
-        # Diffusion policy conditioning
-        # unet_configs = dict(
-        #     input_dim=dataset.state_dim*dataset.n_support_points, # 4*64
-        #     global_cond_dim=global_cond_dim
-        # )
-        # model = get_model(
-        #     model_class=diffusion_model_class,
-        #     model=ConditionalUnet1D(**unet_configs),
-        #     tensor_args=tensor_args,
-        #     **diffusion_configs,
-        #     **unet_configs
-        # )
+    # Diffusion policy conditioning
+    # unet_configs = dict(
+    #     input_dim=dataset.state_dim*dataset.n_support_points, # 4*64
+    #     global_cond_dim=global_cond_dim
+    # )
+    # model = get_model(
+    #     model_class=diffusion_model_class,
+    #     model=ConditionalUnet1D(**unet_configs),
+    #     tensor_args=tensor_args,
+    #     **diffusion_configs,
+    #     **unet_configs
+    # )
 
     # Model
     diffusion_configs = dict(
@@ -132,7 +131,6 @@ def experiment(
         **diffusion_configs,
         **unet_configs
     )
-
 
     # Loss
     loss_fn = val_loss_fn = get_loss(

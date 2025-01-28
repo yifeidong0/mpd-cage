@@ -53,13 +53,15 @@ def experiment(
     n_guide_steps: int = 0,
     n_diffusion_steps_without_noise: int = 5,
 
-    weight_grad_cost_collision: float = 1e-2, # 1e-2
+    weight_grad_cost_collision: float = 1e-3, # 1e-2
     weight_grad_cost_smoothness: float = 1e-4, # 1e-3
     weight_potential_energy: float = 5e-3, # 5e-2
 
     factor_num_interpolated_points_for_collision: float = 1.5,
 
     trajectory_duration: float = 5.0,  # currently fixed
+
+    use_conditioning: bool = True,
 
     ########################################################################
     device: str = 'cuda',
@@ -70,7 +72,7 @@ def experiment(
 
     ########################################################################
     # MANDATORY
-    seed: int = 11,
+    seed: int = 373,
     results_dir: str = 'logs',
 
     ########################################################################
@@ -124,18 +126,28 @@ def experiment(
     # set robot's dt
     robot.dt = dt
 
+    # Conditioning parameters
+    num_obstacles = 6
+    dof_obstacle = 3
+    context_model = 'default' if use_conditioning else None
+    conditioning_type = 'default' if use_conditioning else None
+    global_cond_dim = dof_obstacle * num_obstacles
+
     ########################################################################################################################
     # Load prior model
     diffusion_configs = dict(
         variance_schedule=args['variance_schedule'],
         n_diffusion_steps=args['n_diffusion_steps'],
         predict_epsilon=args['predict_epsilon'],
+        context_model=context_model,
     )
     unet_configs = dict(
         state_dim=dataset.state_dim,
         n_support_points=dataset.n_support_points,
         unet_input_dim=args['unet_input_dim'],
         dim_mults=UNET_DIM_MULTS[args['unet_dim_mults_option']],
+        conditioning_type=conditioning_type,
+        conditioning_embed_dim=global_cond_dim,
     )
     diffusion_model = get_model(
         model_class=args['diffusion_model_class'],
@@ -153,7 +165,7 @@ def experiment(
 
     freeze_torch_model_params(model)
     model = torch.compile(model)
-    model.warmup(horizon=n_support_points, device=device)
+    # model.warmup(horizon=n_support_points, device=device)
 
     ########################################################################################################################
     # Random initial and final positions
@@ -162,8 +174,9 @@ def experiment(
     for _ in range(n_tries):
         if model_id == 'EnvCage2D-RobotPointMass':
             # Check if q_free falls within the angle (-0.25 * torch.pi, 1.25 * torch.pi) and radius (0.0, 0.5) ranges
+            centers, radii = env.generate_rand_obstacles()
             q_free = task.random_coll_free_q(n_samples=1)
-            rad = torch.linalg.norm(q_free- torch.tensor([0.0, 0.0], **tensor_args))
+            rad = torch.linalg.norm(q_free-torch.tensor([0.0, 0.0], **tensor_args))
             angle = torch.atan2(q_free[1], q_free[0])
             if rad > 0.5 or angle < -1.25 * torch.pi or angle > 0.25 * torch.pi:
                 continue
@@ -184,6 +197,7 @@ def experiment(
 
     print(f'start_state_pos: {start_state_pos}')
     print(f'goal_state_pos: {goal_state_pos}')
+    print(f'obstacles: {env.obj_all_list}')
 
     ########################################################################################################################
     # Run motion planning inference
@@ -191,7 +205,17 @@ def experiment(
     ########
     # normalize start and goal positions
     hard_conds = dataset.get_hard_conditions(torch.vstack((start_state_pos, goal_state_pos)), normalize=True)
-    context = None
+    if use_conditioning:
+        from mpd.models import build_context
+        import numpy as np
+        obstacle_normalized = dict()
+        obstacles = np.hstack((centers, radii.reshape(-1, 1))).flatten()
+        obstacles = torch.tensor(obstacles, **tensor_args)
+        data_normalized = dataset.normalize(obstacles, dataset.field_key_task)
+        obstacle_normalized[f'{dataset.field_key_task}_normalized'] = data_normalized
+        context = build_context(model, dataset, obstacle_normalized)
+    else:
+        context = None
 
     ########
     # Set up the planning costs
@@ -385,15 +409,15 @@ def experiment(
 
         pos_trajs_iters = robot.get_position(trajs_iters)
 
-        # planner_visualizer.animate_opt_iters_joint_space_state(
-        #     trajs=trajs_iters,
-        #     pos_start_state=start_state_pos, pos_goal_state=goal_state_pos,
-        #     vel_start_state=torch.zeros_like(start_state_pos), vel_goal_state=torch.zeros_like(goal_state_pos),
-        #     traj_best=traj_final_free_best,
-        #     video_filepath=os.path.join(results_dir, f'{base_file_name}-joint-space-opt-iters.mp4'),
-        #     n_frames=max((2, len(trajs_iters))),
-        #     anim_time=5
-        # )
+        planner_visualizer.animate_opt_iters_joint_space_state(
+            trajs=trajs_iters,
+            pos_start_state=start_state_pos, pos_goal_state=goal_state_pos,
+            vel_start_state=torch.zeros_like(start_state_pos), vel_goal_state=torch.zeros_like(goal_state_pos),
+            traj_best=traj_final_free_best,
+            video_filepath=os.path.join(results_dir, f'{base_file_name}-joint-space-opt-iters.mp4'),
+            n_frames=max((2, len(trajs_iters))),
+            anim_time=5
+        )
 
         if isinstance(robot, RobotPanda):
             # visualize in Isaac Gym
@@ -444,14 +468,14 @@ def experiment(
                 anim_time=5
             )
 
-            # planner_visualizer.animate_robot_trajectories(
-            #     trajs=pos_trajs_iters[-1], start_state=start_state_pos, goal_state=goal_state_pos,
-            #     plot_trajs=True,
-            #     video_filepath=os.path.join(results_dir, f'{base_file_name}-robot-traj.mp4'),
-            #     # n_frames=max((2, pos_trajs_iters[-1].shape[1]//10)),
-            #     n_frames=pos_trajs_iters[-1].shape[1],
-            #     anim_time=trajectory_duration
-            # )
+            planner_visualizer.animate_robot_trajectories(
+                trajs=pos_trajs_iters[-1], start_state=start_state_pos, goal_state=goal_state_pos,
+                plot_trajs=True,
+                video_filepath=os.path.join(results_dir, f'{base_file_name}-robot-traj.mp4'),
+                # n_frames=max((2, pos_trajs_iters[-1].shape[1]//10)),
+                n_frames=pos_trajs_iters[-1].shape[1],
+                anim_time=trajectory_duration
+            )
 
         plt.show()
 
