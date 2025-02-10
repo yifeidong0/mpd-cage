@@ -29,7 +29,7 @@ def experiment(
     n_diffusion_steps: int = 25,
     predict_epsilon: bool = True,
 
-    use_conditioning: bool = 1,
+    use_conditioning: bool = 1, # TODO: pass it to launch_train_01.py
 
     # Unet
     unet_input_dim: int = 32,

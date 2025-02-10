@@ -37,9 +37,9 @@ def experiment(
     # Experiment configuration
     # model_id: str = 'EnvDense2D-RobotPointMass',
     # model_id: str = 'EnvNarrowPassageDense2D-RobotPointMass',
-    # model_id: str = 'EnvSpheres3D-RobotPanda',
+    model_id: str = 'EnvSpheres3D-RobotPanda',
     # model_id: str = 'EnvSimple2D-RobotPointMass',
-    model_id: str = 'EnvCage2D-RobotPointMass',
+    # model_id: str = 'EnvCage2D-RobotPointMass',
 
     # planner_alg: str = 'diffusion_prior',
     # planner_alg: str = 'diffusion_prior_then_guide',
@@ -47,7 +47,7 @@ def experiment(
 
     use_guide_on_extra_objects_only: bool = False,
 
-    n_samples: int = 20,
+    n_samples: int = 50,
 
     start_guide_steps_fraction: float = 0.25,
     n_guide_steps: int = 0,
@@ -61,8 +61,6 @@ def experiment(
 
     trajectory_duration: float = 5.0,  # currently fixed
 
-    use_conditioning: bool = True,
-
     ########################################################################
     device: str = 'cuda',
 
@@ -72,12 +70,14 @@ def experiment(
 
     ########################################################################
     # MANDATORY
-    seed: int = 373,
+    seed: int = 2,
     results_dir: str = 'logs',
 
     ########################################################################
     **kwargs
 ):
+    use_conditioning = True if model_id == 'EnvCage2D-RobotPointMass' else False
+
     ########################################################################################################################
     fix_random_seed(seed)
 
@@ -165,7 +165,8 @@ def experiment(
 
     freeze_torch_model_params(model)
     model = torch.compile(model)
-    # model.warmup(horizon=n_support_points, device=device)
+    if model_id != 'EnvCage2D-RobotPointMass':
+        model.warmup(horizon=n_support_points, device=device)
 
     ########################################################################################################################
     # Random initial and final positions

@@ -18,6 +18,7 @@ repo = git.Repo('.', search_parent_directories=True)
 dataset_base_dir = os.path.join(repo.working_dir, 'data_trajectories')
 
 
+# NOTE: dataset preprocessing
 class TrajectoryDatasetBase(Dataset, abc.ABC):
 
     def __init__(self,
@@ -110,10 +111,13 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
             trajs = trajs_free_pos
         self.fields[self.field_key_traj] = trajs
 
-        # task: start and goal state positions [n_trajectories, 2 * state_dim]
-        # task = torch.cat((trajs_free_pos[..., 0, :], trajs_free_pos[..., -1, :]), dim=-1) # NOTE: torch.Size([3600*4, 2*2]), position-only
-        obstacles = torch.cat(obstacles_l)
-        self.fields[self.field_key_task] = obstacles
+        if len(obstacles_l) == 0:
+            # task: start and goal state positions [n_trajectories, 2 * state_dim]
+            task = torch.cat((trajs_free_pos[..., 0, :], trajs_free_pos[..., -1, :]), dim=-1) # NOTE: torch.Size([3600*4, 2*2]), position-only
+            self.fields[self.field_key_task] = task
+        else: # obstacle conditioning (EnvCage2D)
+            obstacles = torch.cat(obstacles_l)
+            self.fields[self.field_key_task] = obstacles
 
     def normalize_all_data(self, *keys):
         for key in keys:

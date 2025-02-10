@@ -81,7 +81,7 @@ predict_epsilon_l = [
 dim = 32
 
 unet_dim_mults_option_l = [
-    # 0, # NOTE: simpler unet. Not working as well
+    # 0, # NOTE: simpler unet. Not working as well as 1
     1
 ]
 
