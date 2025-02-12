@@ -495,12 +495,14 @@ if __name__ == "__main__":
     total_time = 5.0
     num_points = 64
     dt = total_time / num_points
-    num_envs = 2       # Number of trajectories per variation
-    num_variations = 4  # Total variations/environments
+    num_envs = 8       # Number of trajectories per variation
+    num_variations = 128  # Total variations/environments
+    max_failures = 5 # Maximum number of failures allowed in a variation
     t0 = time.time()
 
-    # For the 3D case, we will use "EnvCage3D-RobotSphere" as the base directory.
-    for variation_id in range(num_variations):
+    # for variation_id in range(num_variations):
+    variation_id = 0
+    while variation_id < num_variations:
         print(f"\n# Variation {variation_id}")
         # Set a random seed for reproducibility
         np.random.seed(variation_id)
@@ -514,18 +516,19 @@ if __name__ == "__main__":
         j = 0
         fixed_centers = None
         fixed_radii = None
+        num_failures = 0
         while j < num_envs:
             print(f"  # Environment {j}")
             try:
                 # Generate random obstacles (10 spheres) and start/goal positions.
                 centers, radii, start_pos, goal_pos = generate_random_obstacles_3d(fix_obstacles=False)
                 # Optionally, you can fix the obstacles across environments by uncommenting:
-                # if j == 0:
-                #     fixed_centers = centers
-                #     fixed_radii = radii
-                # else:
-                #     centers = fixed_centers
-                #     radii = fixed_radii
+                if j == 0:
+                    fixed_centers = centers
+                    fixed_radii = radii
+                else:
+                    centers = fixed_centers
+                    radii = fixed_radii
 
                 print("    centers:", centers)
                 print("    radii:", radii)
@@ -552,20 +555,30 @@ if __name__ == "__main__":
                     if args.visualize_pb:
                         visualize_path_pybullet(sol_path.tolist(), centers, radii, start_pos, goal_pos)
                 else:
-                    print("    No valid path found in this environment.")
+                    num_failures += 1
+                    print("No valid path found in this environment.")
+                if num_failures >= max_failures:
+                    print(f"  # Environment {j}: Too many failures. Skipping this variation.")
+                    break
+
             except Exception as e:
                 print(f"    Error in environment {j}: {e}")
                 continue  # Skip this environment if an error occurs
+
+        if num_failures >= max_failures:
+            continue  # Skip this variation if too many failures occurred
+        else:
+            variation_id += 1
 
         # Save the trajectories dataset.
         # Trajectories: concatenation of positions and velocities along the last axis.
         trajectories = np.concatenate((np.array(paths), np.array(velocities)), axis=-1)
         trajs_free = torch.tensor(trajectories, dtype=torch.float32)
-        DATA_DIR = f"EnvCage3D-RobotSphere/{variation_id}"
+        DATA_DIR = f"EnvSpheres3D-RobotSphere3D/{variation_id}"
         if not os.path.exists(DATA_DIR):
             os.makedirs(DATA_DIR)
         torch.save(trajs_free, os.path.join(DATA_DIR, 'trajs-free.pt'))
-        print(f"trajs_free.shape: {trajs_free.shape}")  # Expected shape: (num_envs, num_points, 6)
+        print(f"trajs_free.shape: {trajs_free.shape}")  # Expected shape: (num_envs, num_points, 2*c_dim)
         print(f"trajs_free.dtype: {trajs_free.dtype}")
 
         # Save obstacles: each obstacle is represented by [x, y, z, r].
@@ -582,25 +595,25 @@ if __name__ == "__main__":
             'debug': False,
             'device': 'cpu',
             'duration': total_time,
-            'env_id': 'EnvCage3D',
+            'env_id': 'EnvSpheres3D',
             'git_hash': '9dd8739a99cd0a0ec1a690133b7dc71477082fc2',  # Update as needed.
             'git_url': 'git@github.com:yifeidong0/mpd-cage.git',
             'n_support_points': num_points,
             'num_trajectories': num_envs,
             'obstacle_cutoff_margin': 0.0,
             'results_dir': DATA_DIR,
-            'robot_id': 'RobotSphere',
+            'robot_id': 'RobotSphere3D',
             'seed': variation_id,
             'threshold_start_goal_pos': 0.0
         }
 
         metadata = {
-            'env_id': 'EnvCage3D',
+            'env_id': 'EnvSpheres3D',
             'num_trajectories': num_envs,
             'num_trajectories_generated': num_envs,
             'num_trajectories_generated_coll': 0,
             'num_trajectories_generated_free': num_envs,
-            'robot_id': 'RobotSphere'
+            'robot_id': 'RobotSphere3D'
         }
 
         with open(os.path.join(DATA_DIR, 'args.yaml'), 'w') as f:

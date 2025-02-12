@@ -87,12 +87,13 @@ unet_dim_mults_option_l = [
 ]
 
 
-batch_size = 128
+# batch_size = 128
+batch_size = 32
 lr = 2e-5
 
 
 wandb_options = dict(
-    wandb_enabled=False,
+    wandb_enabled=True,
     wandb_mode='online',  # "online", "offline" or "disabled"
     wandb_entity='yif',
     wandb_project=exp_name
@@ -116,10 +117,10 @@ for dataset_subdir, include_velocity, use_ema, variance_schedule, n_diffusion_st
         lr=lr,
 
         batch_size=batch_size,
-        num_train_steps=1e6, # 500000
+        num_train_steps=1e5, # 1e6, # 500000
 
-        steps_til_ckpt=4e3, # 50000
-        steps_til_summary=3e3, # 20000
+        steps_til_ckpt=5e3, # 50000
+        steps_til_summary=2e3, # 20000
 
         **wandb_options,
         wandb_group=f'{dataset_subdir}-{include_velocity}-{use_ema}-{variance_schedule}-{n_diffusion_steps}-{predict_epsilon}-{unet_dim_mults_option}',

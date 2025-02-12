@@ -51,11 +51,10 @@ class SummaryTrajectoryGeneration(SummaryBase):
                 sphere_radii = context['tasks'].reshape(-1, 3)[:, 2]
                 dataset.task.env.update_obstacles(sphere_centers, sphere_radii)
             elif dataset.task.env.env_name == 'EnvSpheres3D':
-                # print(f"!!!!!!!!!!!!!!!!!!!!EnvSpheres3D!: ")
                 # print(f"!!!!!!!!!!!!!!!!!!!!context['tasks'].shape: {context['tasks'].shape}")
                 sphere_centers = context['tasks'].reshape(-1, 4)[:, :3] # 4: x, y, z, r
                 sphere_radii = context['tasks'].reshape(-1, 4)[:, 3]
-                # dataset.task.env.update_obstacles(sphere_centers, sphere_radii)
+                dataset.task.env.update_obstacles(sphere_centers, sphere_radii)
 
         # ------------------------------------------------------------------------------------
         # STATISTICS

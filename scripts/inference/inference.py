@@ -37,9 +37,10 @@ def experiment(
     # Experiment configuration
     # model_id: str = 'EnvDense2D-RobotPointMass',
     # model_id: str = 'EnvNarrowPassageDense2D-RobotPointMass',
-    model_id: str = 'EnvSpheres3D-RobotPanda',
+    # model_id: str = 'EnvSpheres3D-RobotPanda',
     # model_id: str = 'EnvSimple2D-RobotPointMass',
     # model_id: str = 'EnvCage2D-RobotPointMass',
+    model_id: str = 'EnvSpheres3D-RobotSphere3D',
 
     # planner_alg: str = 'diffusion_prior',
     # planner_alg: str = 'diffusion_prior_then_guide',
@@ -76,7 +77,8 @@ def experiment(
     ########################################################################
     **kwargs
 ):
-    use_conditioning = True if model_id == 'EnvCage2D-RobotPointMass' else False
+    dirs_w_cond = ['EnvCage2D-RobotPointMass', 'EnvSpheres3D-RobotSphere3D']
+    use_conditioning = True if model_id in dirs_w_cond else False
 
     ########################################################################################################################
     fix_random_seed(seed)
@@ -128,7 +130,7 @@ def experiment(
 
     # Conditioning parameters
     num_obstacles = 6
-    dof_obstacle = 3
+    dof_obstacle = 3 if model_id == 'EnvCage2D-RobotPointMass' else 4
     context_model = 'default' if use_conditioning else None
     conditioning_type = 'default' if use_conditioning else None
     global_cond_dim = dof_obstacle * num_obstacles
@@ -165,7 +167,7 @@ def experiment(
 
     freeze_torch_model_params(model)
     model = torch.compile(model)
-    if model_id != 'EnvCage2D-RobotPointMass':
+    if model_id not in dirs_w_cond:
         model.warmup(horizon=n_support_points, device=device)
 
     ########################################################################################################################
@@ -183,6 +185,10 @@ def experiment(
                 continue
             start_state_pos = q_free
             goal_state_pos = torch.tensor([0.0, -1.0], **tensor_args)
+        elif model_id == 'EnvSpheres3D-RobotSphere3D': # TODO
+            centers, radii, start_pos, goal_pos = env.generate_rand_obstacles()
+            start_state_pos = torch.tensor(start_pos, **tensor_args)
+            goal_state_pos = torch.tensor(goal_pos, **tensor_args)
         else:
             q_free = task.random_coll_free_q(n_samples=2)
             start_state_pos = q_free[0]

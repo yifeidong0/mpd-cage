@@ -106,12 +106,12 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
                 # print(f'$$$$$$$$$$$$$$$$$obstacles_tmp {obstacles_tmp.shape}') # torch.Size([num_traj_in_dir, cond_dim])
                 obstacles_l.append(obstacles_tmp)
             
-            # load fixed obstacles params from env. TODO: add obstacles.pt to the dataset
-            if self.env.env_name == 'EnvSpheres3D':
-                obstacles_tmp = self.env.spheres_flat
-                obstacles_tmp = torch.unsqueeze(obstacles_tmp, 0).repeat(num_traj_in_dir, 1)
-                obstacles_tmp += torch.randn_like(obstacles_tmp) * 0.01 # avoid normalization issues
-                obstacles_l.append(obstacles_tmp)
+            # # load fixed obstacles params from env. TODO: add obstacles.pt to the dataset
+            # if self.env.env_name == 'EnvSpheres3D':
+            #     obstacles_tmp = self.env.spheres_flat
+            #     obstacles_tmp = torch.unsqueeze(obstacles_tmp, 0).repeat(num_traj_in_dir, 1)
+            #     obstacles_tmp += torch.randn_like(obstacles_tmp) * 0.01 # avoid normalization issues
+            #     obstacles_l.append(obstacles_tmp)
 
 
         trajs_free = torch.cat(trajs_free_l)
