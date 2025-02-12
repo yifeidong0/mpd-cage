@@ -82,10 +82,12 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
 
     def load_trajectories(self):
         # load free trajectories
+        # print(f'$$$$$$$$$$$$$$$$$Loading trajectories from {self.base_dir}')
         trajs_free_l = []
         obstacles_l = []
         task_id = 0
         n_trajs = 0
+        num_traj_in_dir = 0
         for current_dir, subdirs, files in os.walk(self.base_dir, topdown=True):
             if 'trajs-free.pt' in files:
                 trajs_free_tmp = torch.load(
@@ -96,11 +98,21 @@ class TrajectoryDatasetBase(Dataset, abc.ABC):
                     self.map_trajectory_id_to_task_id[j] = task_id
                 task_id += 1
                 n_trajs += len(trajs_free_tmp)
+                num_traj_in_dir = len(trajs_free_tmp)
                 trajs_free_l.append(trajs_free_tmp)
             if 'obstacles.pt' in files: # NOTE
                 obstacles_tmp = torch.load(
                     os.path.join(current_dir, 'obstacles.pt'), map_location=self.tensor_args['device'])
+                # print(f'$$$$$$$$$$$$$$$$$obstacles_tmp {obstacles_tmp.shape}') # torch.Size([num_traj_in_dir, cond_dim])
                 obstacles_l.append(obstacles_tmp)
+            
+            # load fixed obstacles params from env. TODO: add obstacles.pt to the dataset
+            if self.env.env_name == 'EnvSpheres3D':
+                obstacles_tmp = self.env.spheres_flat
+                obstacles_tmp = torch.unsqueeze(obstacles_tmp, 0).repeat(num_traj_in_dir, 1)
+                obstacles_tmp += torch.randn_like(obstacles_tmp) * 0.01 # avoid normalization issues
+                obstacles_l.append(obstacles_tmp)
+
 
         trajs_free = torch.cat(trajs_free_l)
         trajs_free_pos = self.robot.get_position(trajs_free)

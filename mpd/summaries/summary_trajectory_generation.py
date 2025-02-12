@@ -24,7 +24,7 @@ class SummaryTrajectoryGeneration(SummaryBase):
 
         data_normalized = dataset[trajectory_id]
         # print(f"!!!!!!!!!!!!!!!!!!!!!data_normalized: {data_normalized.keys()}") # 'traj_normalized', 'task_normalized', 'hard_conds'
-        context_normalized = build_context(model, dataset, data_normalized) # torch.Size([18])
+        context_normalized = build_context(model, dataset, data_normalized) # torch.Size([cond_dim]), such as torch.Size([18]) for EnvCage2D-RobotPointMass
 
         # ------------------------------------------------------------------------------------
         # Sample trajectories with the diffusion/cvae model
@@ -41,14 +41,24 @@ class SummaryTrajectoryGeneration(SummaryBase):
         # Unnormalize trajectory samples from the diffusion model
         context = dict()
         trajs = dataset.unnormalize(trajs_normalized, dataset.field_key_traj) # torch.Size([n_samples, 64, 4])
-        context['tasks'] = dataset.unnormalize(context_normalized['tasks'], dataset.field_key_task) # torch.Size([6, 3])
+        # print(f"!!!!!!!!!!!!!!!!!!!!!context_normalized: {context_normalized}")
+        if context_normalized is not None: # equivalent to use_conditioning=True in train.py
+            context['tasks'] = dataset.unnormalize(context_normalized['tasks'], dataset.field_key_task) # torch.Size([6, 3])
+
+            # Update the obstacles in the environment
+            if dataset.task.env.env_name == 'EnvCage2D':
+                sphere_centers = context['tasks'].reshape(-1, 3)[:, :2]
+                sphere_radii = context['tasks'].reshape(-1, 3)[:, 2]
+                dataset.task.env.update_obstacles(sphere_centers, sphere_radii)
+            elif dataset.task.env.env_name == 'EnvSpheres3D':
+                # print(f"!!!!!!!!!!!!!!!!!!!!EnvSpheres3D!: ")
+                # print(f"!!!!!!!!!!!!!!!!!!!!context['tasks'].shape: {context['tasks'].shape}")
+                sphere_centers = context['tasks'].reshape(-1, 4)[:, :3] # 4: x, y, z, r
+                sphere_radii = context['tasks'].reshape(-1, 4)[:, 3]
+                # dataset.task.env.update_obstacles(sphere_centers, sphere_radii)
 
         # ------------------------------------------------------------------------------------
         # STATISTICS
-        sphere_centers = context['tasks'].reshape(-1, 3)[:, :2]
-        sphere_radii = context['tasks'].reshape(-1, 3)[:, 2]
-        dataset.task.env.update_obstacles(sphere_centers, sphere_radii)
-
         wandb.log({f'{prefix}percentage free trajs': dataset.task.compute_fraction_free_trajs(trajs)}, step=train_step)
         wandb.log({f'{prefix}percentage collision intensity': dataset.task.compute_collision_intensity_trajs(trajs)}, step=train_step)
         wandb.log({f'{prefix}success': dataset.task.compute_success_free_trajs(trajs)}, step=train_step)

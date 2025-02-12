@@ -51,10 +51,11 @@ launcher = Launcher(
 
 dataset_subdir_l = [
     # 'EnvSimple2D-RobotPointMass',
-    'EnvCage2D-RobotPointMass',
+    # 'EnvCage2D-RobotPointMass',
     # 'EnvNarrowPassageDense2D-RobotPointMass',
     # 'EnvDense2D-RobotPointMass',
     # 'EnvSpheres3D-RobotPanda',
+    'EnvSpheres3D-RobotSphere3D',
 
 ]
 
@@ -91,7 +92,7 @@ lr = 2e-5
 
 
 wandb_options = dict(
-    wandb_enabled=True,
+    wandb_enabled=False,
     wandb_mode='online',  # "online", "offline" or "disabled"
     wandb_entity='yif',
     wandb_project=exp_name

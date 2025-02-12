@@ -27,10 +27,10 @@ def make_timesteps(batch_size, i, device):
     return t
 
 
-def build_context(model, dataset, input_dict):
+def build_context(model, dataset, input_dict):\
     # input_dict is already normalized
     context = None
-    if model.context_model is not None:
+    if model.context_model is not None: # use_conditioning
         context = dict()
         # (normalized) features of variable environments
         # if dataset.variable_environment:
@@ -38,6 +38,8 @@ def build_context(model, dataset, input_dict):
         #     context['env'] = env_normalized
 
         # tasks
+        # print(f"!!!!!!!!!!!!!!!!!!!!!dataset.field_key_task: {dataset.field_key_task}")
+        # print(f"!!!!!!!!!!!!!!!!!!!!!input_dict: {input_dict}")
         task_normalized = input_dict[f'{dataset.field_key_task}_normalized']
         context['tasks'] = task_normalized
     return context

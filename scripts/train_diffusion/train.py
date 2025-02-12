@@ -20,6 +20,7 @@ def experiment(
     # dataset_subdir: str = 'EnvSimple2D-RobotPointMass',
     dataset_subdir: str = 'EnvCage2D-RobotPointMass',
     # dataset_subdir: str = 'EnvSpheres3D-RobotPanda',
+    # dataset_subdir: str = 'EnvSpheres3D-RobotSphere3D',
     include_velocity: bool = True,
 
     ########################################################################
@@ -88,8 +89,17 @@ def experiment(
 
     dataset = train_subset.dataset
 
-    num_obstacles = 6 # TODO
-    dof_per_obstacle = 3
+    # dataset_subdir: str = 'EnvCage2D-RobotPointMass',
+    # dataset_subdir: str = 'EnvSpheres3D-RobotPanda',
+    if dataset_subdir == 'EnvCage2D-RobotPointMass':
+        num_obstacles = 6 # TODO: pass it to launch_train_01.py
+        dof_per_obstacle = 3
+    elif dataset_subdir == 'EnvSpheres3D-RobotPanda':
+        num_obstacles = 10
+        dof_per_obstacle = 4
+    else:
+        num_obstacles = 1
+        dof_per_obstacle = 3
     global_cond_dim = num_obstacles * dof_per_obstacle
     context_model = 'default' if use_conditioning else None
     conditioning_type = 'default' if use_conditioning else None
