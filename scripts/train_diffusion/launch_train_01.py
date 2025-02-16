@@ -55,12 +55,13 @@ dataset_subdir_l = [
     # 'EnvNarrowPassageDense2D-RobotPointMass',
     # 'EnvDense2D-RobotPointMass',
     # 'EnvSpheres3D-RobotPanda',
-    'EnvSpheres3D-RobotSphere3D',
-
+    # 'EnvSpheres3D-RobotSphere3D',
+    'EnvHook3D-RobotTape3D',
 ]
 
 include_velocity_l = [
-    True
+    # True
+    False
 ]
 
 use_ema_l = [
@@ -93,7 +94,7 @@ lr = 2e-5
 
 
 wandb_options = dict(
-    wandb_enabled=True,
+    wandb_enabled=1,
     wandb_mode='online',  # "online", "offline" or "disabled"
     wandb_entity='yif',
     wandb_project=exp_name
@@ -120,7 +121,7 @@ for dataset_subdir, include_velocity, use_ema, variance_schedule, n_diffusion_st
         num_train_steps=1e5, # 1e6, # 500000
 
         steps_til_ckpt=5e3, # 50000
-        steps_til_summary=2e3, # 20000
+        steps_til_summary=1e3, # 20000
 
         **wandb_options,
         wandb_group=f'{dataset_subdir}-{include_velocity}-{use_ema}-{variance_schedule}-{n_diffusion_steps}-{predict_epsilon}-{unet_dim_mults_option}',

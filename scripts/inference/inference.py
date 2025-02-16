@@ -37,10 +37,10 @@ def experiment(
     # Experiment configuration
     # model_id: str = 'EnvDense2D-RobotPointMass',
     # model_id: str = 'EnvNarrowPassageDense2D-RobotPointMass',
-    # model_id: str = 'EnvSpheres3D-RobotPanda',
+    model_id: str = 'EnvSpheres3D-RobotPanda',
     # model_id: str = 'EnvSimple2D-RobotPointMass',
     # model_id: str = 'EnvCage2D-RobotPointMass',
-    model_id: str = 'EnvSpheres3D-RobotSphere3D',
+    # model_id: str = 'EnvSpheres3D-RobotSphere3D',
 
     # planner_alg: str = 'diffusion_prior',
     # planner_alg: str = 'diffusion_prior_then_guide',

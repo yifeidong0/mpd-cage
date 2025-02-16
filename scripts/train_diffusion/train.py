@@ -30,7 +30,7 @@ def experiment(
     n_diffusion_steps: int = 25,
     predict_epsilon: bool = True,
 
-    use_conditioning: bool = 1, # TODO: pass it to launch_train_01.py
+    use_conditioning: bool = 0, # TODO: pass it to launch_train_01.py
 
     # Unet
     unet_input_dim: int = 32,
@@ -97,12 +97,16 @@ def experiment(
     elif dataset_subdir == 'EnvSpheres3D-RobotSphere3D':
         num_obstacles = 6
         dof_per_obstacle = 4
+    elif dataset_subdir == 'EnvHook3D-RobotTape3D': # TODO
+        num_obstacles = 6
+        dof_per_obstacle = 4
     else:
         num_obstacles = 6
         dof_per_obstacle = 3
     global_cond_dim = num_obstacles * dof_per_obstacle
     context_model = 'default' if use_conditioning else None
     conditioning_type = 'default' if use_conditioning else None
+    print(f"!!!!!!!!!!!!!!!!!!!!!dataset.state_dim: {dataset.state_dim}")
 
     # Diffusion policy conditioning
     # unet_configs = dict(
