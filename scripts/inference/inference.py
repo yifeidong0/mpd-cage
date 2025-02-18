@@ -1,4 +1,5 @@
 from torch_robotics.isaac_gym_envs.motion_planning_envs import PandaMotionPlanningIsaacGymEnv, MotionPlanningController
+from torch_robotics.pybullet_envs.visualize_escapes import VisualizeEscapePybullet
 
 import os
 import pickle
@@ -17,7 +18,7 @@ from mpd.models.diffusion_models.guides import GuideManagerTrajectoriesWithVeloc
 from mpd.models.diffusion_models.sample_functions import guide_gradient_steps, ddpm_sample_fn
 from mpd.trainer import get_dataset, get_model
 from mpd.utils.loading import load_params_from_yaml
-from torch_robotics.robots import RobotPanda
+from torch_robotics.robots import RobotPanda, RobotTape3D
 from torch_robotics.torch_utils.seed import fix_random_seed
 from torch_robotics.torch_utils.torch_timer import TimerCUDA
 from torch_robotics.torch_utils.torch_utils import get_torch_device, freeze_torch_model_params
@@ -27,9 +28,7 @@ from torch_robotics.visualizers.planning_visualizer import PlanningVisualizer
 
 allow_ops_in_compiled_graph()
 
-
 TRAINED_MODELS_DIR = 'data_trained_models/'
-
 
 @single_experiment_yaml
 def experiment(
@@ -37,10 +36,11 @@ def experiment(
     # Experiment configuration
     # model_id: str = 'EnvDense2D-RobotPointMass',
     # model_id: str = 'EnvNarrowPassageDense2D-RobotPointMass',
-    model_id: str = 'EnvSpheres3D-RobotPanda',
+    # model_id: str = 'EnvSpheres3D-RobotPanda',
     # model_id: str = 'EnvSimple2D-RobotPointMass',
     # model_id: str = 'EnvCage2D-RobotPointMass',
-    # model_id: str = 'EnvSpheres3D-RobotSphere3D',
+    model_id: str = 'EnvSpheres3D-RobotSphere3D',
+    # model_id: str = 'EnvHook3D-RobotTape3D',
 
     # planner_alg: str = 'diffusion_prior',
     # planner_alg: str = 'diffusion_prior_then_guide',
@@ -78,6 +78,7 @@ def experiment(
     **kwargs
 ):
     dirs_w_cond = ['EnvCage2D-RobotPointMass', 'EnvSpheres3D-RobotSphere3D']
+    dirs_6d_action = ['EnvHook3D-RobotTape3D']
     use_conditioning = True if model_id in dirs_w_cond else False
 
     ########################################################################################################################
@@ -189,6 +190,10 @@ def experiment(
             centers, radii, start_pos, goal_pos = env.generate_rand_obstacles()
             start_state_pos = torch.tensor(start_pos, **tensor_args)
             goal_state_pos = torch.tensor(goal_pos, **tensor_args)
+        elif model_id == 'EnvHook3D-RobotTape3D': # TODO
+            # (-0.01859812357893365, -0.023447456142250377, -0.28283242912879436) (-0.0020440397221317803, -0.022579989738654827, 0.003377273913886464, 0.9997372454729928)
+            start_state_pos = torch.tensor([-0.0, -0.0, -0.2,0,0,0], **tensor_args)
+            goal_state_pos = torch.tensor([0,0,-1.0,0,0,0], **tensor_args)
         else:
             q_free = task.random_coll_free_q(n_samples=2)
             start_state_pos = q_free[0]
@@ -338,15 +343,20 @@ def experiment(
     trajs_iters = dataset.unnormalize_trajectories(trajs_normalized_iters)
 
     trajs_final = trajs_iters[-1]
-    trajs_final_coll, trajs_final_coll_idxs, trajs_final_free, trajs_final_free_idxs, _ = task.get_trajs_collision_and_free(trajs_final, return_indices=True)
+    if model_id == 'EnvHook3D-RobotTape3D':
+        trajs_final_coll, trajs_final_free = task.get_trajs_collision_and_free_pb(trajs_final, return_indices=False)
+        trajs_final_coll_idxs = task.trajs_coll_idxs
+        trajs_final_free_idxs = task.trajs_free_idxs
+    else:
+        trajs_final_coll, trajs_final_coll_idxs, trajs_final_free, trajs_final_free_idxs, _ = task.get_trajs_collision_and_free(trajs_final, return_indices=True)
 
     ########################################################################################################################
     # Compute motion planning metrics
     print(f'\n----------------METRICS----------------')
     print(f't_total: {t_total:.3f} sec')
 
-    success_free_trajs = task.compute_success_free_trajs(trajs_final)
     fraction_free_trajs = task.compute_fraction_free_trajs(trajs_final)
+    success_free_trajs = task.compute_success_free_trajs(trajs_final)
     collision_intensity_trajs = task.compute_collision_intensity_trajs(trajs_final)
 
     print(f'success: {success_free_trajs}')
@@ -361,7 +371,7 @@ def experiment(
     cost_path_length = None
     cost_all = None
     variance_waypoint_trajs_final_free = None
-    if trajs_final_free is not None:
+    if (trajs_final_free is not None) and (model_id not in dirs_6d_action):
         cost_smoothness = compute_smoothness(trajs_final_free, robot)
         print(f'cost smoothness: {cost_smoothness.mean():.4f}, {cost_smoothness.std():.4f}')
 
@@ -465,6 +475,12 @@ def experiment(
                 video_path=os.path.join(results_dir, f'{base_file_name}-isaac-controller-position.mp4'),
                 make_gif=False
             )
+        elif isinstance(robot, RobotTape3D):
+            pybullet_visualizer = VisualizeEscapePybullet(env, robot, task)
+            pybullet_visualizer.visualize_escape_pb(trajs_final_free,
+                                                    make_video=True,
+                                                    video_path=os.path.join(results_dir, f'{base_file_name}-bullet-controller-pose.mp4'),
+                                                    )
         else:
             # visualize in the planning environment
             planner_visualizer.animate_opt_iters_robots(

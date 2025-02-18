@@ -89,8 +89,8 @@ unet_dim_mults_option_l = [
 
 
 # batch_size = 128
-batch_size = 32
-lr = 2e-5
+batch_size = 64
+lr = 3e-6
 
 
 wandb_options = dict(
@@ -118,10 +118,10 @@ for dataset_subdir, include_velocity, use_ema, variance_schedule, n_diffusion_st
         lr=lr,
 
         batch_size=batch_size,
-        num_train_steps=1e5, # 1e6, # 500000
+        num_train_steps=1e6, # 1e6, # 500000
 
-        steps_til_ckpt=5e3, # 50000
-        steps_til_summary=1e3, # 20000
+        steps_til_ckpt=1e4, # 50000
+        steps_til_summary=5e3, # 20000
 
         **wandb_options,
         wandb_group=f'{dataset_subdir}-{include_velocity}-{use_ema}-{variance_schedule}-{n_diffusion_steps}-{predict_epsilon}-{unet_dim_mults_option}',
