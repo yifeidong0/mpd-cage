@@ -56,7 +56,8 @@ dataset_subdir_l = [
     # 'EnvDense2D-RobotPointMass',
     # 'EnvSpheres3D-RobotPanda',
     # 'EnvSpheres3D-RobotSphere3D',
-    'EnvHook3D-RobotTape3D',
+    # 'EnvHook3D-RobotTape3D',
+    'EnvSpheres3D-RobotAllegro',
 ]
 
 include_velocity_l = [
@@ -94,7 +95,7 @@ lr = 3e-6
 
 
 wandb_options = dict(
-    wandb_enabled=1,
+    wandb_enabled=0,
     wandb_mode='online',  # "online", "offline" or "disabled"
     wandb_entity='yif',
     wandb_project=exp_name

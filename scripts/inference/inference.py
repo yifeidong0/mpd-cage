@@ -39,8 +39,9 @@ def experiment(
     # model_id: str = 'EnvSpheres3D-RobotPanda',
     # model_id: str = 'EnvSimple2D-RobotPointMass',
     # model_id: str = 'EnvCage2D-RobotPointMass',
-    model_id: str = 'EnvSpheres3D-RobotSphere3D',
-    # model_id: str = 'EnvHook3D-RobotTape3D',
+    # model_id: str = 'EnvSpheres3D-RobotSphere3D',
+    model_id: str = 'EnvHook3D-RobotTape3D',
+    # model_id: str = 'EnvSpheres3D-RobotAllegro',
 
     # planner_alg: str = 'diffusion_prior',
     # planner_alg: str = 'diffusion_prior_then_guide',
